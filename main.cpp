@@ -10,10 +10,10 @@ int* state;
 /*int main(){
   init_rand_state(1);
   omp_set_num_threads(4);
-  vector<int> A;
-  map<int,bool> record;
+  vector<long> A;
+  map<long,bool> record;
   for (int i = 0; i < 32; i++){
-    int random_number = rand(0)%1000;
+    long random_number = rand(0)%1000;
     if (record.find(random_number) == record.end()){
       A.push_back(random_number);
       record[random_number] = true;
@@ -32,24 +32,26 @@ int* state;
 
 int main(){
   init_rand_state(1);
-  /*vector<int> A;
-  map<int,bool> record;
-  for (int i = 0; i < 16; i++){
-    int random_number = rand(0)%1000;
+  omp_set_num_threads(4);
+  omp_set_nested(1);
+  vector<long> A;
+  map<long,bool> record;
+  for (int i = 0; i < 1000; i++){
+    long random_number = rand(0)%100000;
     if (record.find(random_number) == record.end()){
       A.push_back(random_number);
       record[random_number] = true;
     }else{
       i--;
     }
-  }*/
-  vector<int> A = {1,8,3,6,10,14,20,10};
-  print_vector(A);
-  vector<int> r = vector<int>(A.size(),0);
+  }
+  //vector<long> A = {1,10,10,6,8,14,20,10};
+  //print_vector(A);
+  vector<long> r = vector<long>(A.size(),0);
   double start_time = omp_get_wtime();
-  par_counting_rank(A,A.size(),5,r,1);
+  parallel_randomized_quicksort(A,0,A.size()-1,0);
   double time = omp_get_wtime() - start_time;
+  //print_vector(A);
 	std::cout << "\t Time(ms): " << time*1000 << std::endl;
-  print_vector(r);
   return 0;
 }

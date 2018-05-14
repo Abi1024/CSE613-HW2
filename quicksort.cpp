@@ -5,20 +5,20 @@
 #include <omp.h>
 using namespace std;
 
-void print_vector(vector<int>& A){
+void print_vector(const vector<long>& A){
   for (unsigned int i = 0; i < A.size(); i++){
     cout << A[i] << " ";
   }
   cout << endl;
 }
 
-int parallel_partition(vector<int>& A, int q, int r, int x){
+int parallel_partition(vector<long>& A, int q, int r, long x){
   int n = r - q + 1;
   if (n == 1){
     return q;
   }
   //cout << "n: " << n << endl;
-  vector<int> B = vector<int>(n);
+  vector<long> B = vector<long>(n);
   vector<int> lt = vector<int>(n, 0);
   vector<int> gt = vector<int>(n, 0);
   for(int i = 0; i < n; i++){
@@ -50,7 +50,7 @@ int parallel_partition(vector<int>& A, int q, int r, int x){
   return k;
 }
 
-void parallel_randomized_quicksort(vector<int>& A, int q, int r, int thread_ID){
+void parallel_randomized_quicksort(vector<long>& A, int q, int r, int thread_ID){
   //cout << "Calling parallel_randomized_quicksort" << endl;
   int n = r-q + 1;
   if (n <= 32){
@@ -58,7 +58,7 @@ void parallel_randomized_quicksort(vector<int>& A, int q, int r, int thread_ID){
     for (int i = 1; i < n; i++){
       int j = i;
       while ((j > 0) && (A[q+j-1] > A[q+j])){
-        int temp = A[q+j-1];
+        long temp = A[q+j-1];
         A[q+j-1] = A[q+j];
         A[q+j] = temp;
         j--;
@@ -66,7 +66,7 @@ void parallel_randomized_quicksort(vector<int>& A, int q, int r, int thread_ID){
     }
   }else{
     int random_index = rand(thread_ID) % n;
-    int random_number = A[q+random_index];
+    long random_number = A[q+random_index];
     //cout << "random number: " << random_number << endl;
     //cout << "Array before partition:" << endl;
     //print_vector(A);
@@ -74,13 +74,13 @@ void parallel_randomized_quicksort(vector<int>& A, int q, int r, int thread_ID){
     //cout << "k: " << k << endl;
     //cout << "Array after partition:" << endl;
     //print_vector(A);
-    #pragma omp parallel
+    #pragma omp parallel sections
     {
-      #pragma omp single nowait
+      #pragma omp section
       {
         parallel_randomized_quicksort(A,q,k-1,omp_get_thread_num());
       }
-      #pragma omp single nowait
+      #pragma omp section
       {
         parallel_randomized_quicksort(A,k+1,r,omp_get_thread_num());
       }
