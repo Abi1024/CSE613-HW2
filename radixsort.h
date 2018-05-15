@@ -26,6 +26,7 @@ void par_counting_rank(const vector<long> & S, int n, int d, vector<long>& r, in
   //cout << "S: " << endl;
   //print_vector(S);
   //print_vector(r);
+  #pragma omp parallel for
   for (int i = 0; i < p; i++){
     js[i] = i*floor((float)n/p) ;
     je[i] = (i+1 < p) ? ((i+1)*floor((float)n/p)) : n;
@@ -42,6 +43,7 @@ void par_counting_rank(const vector<long> & S, int n, int d, vector<long>& r, in
   }
   //cout << "f: (After prefix sum)" << endl;
   //print2d_vector(f);
+  #pragma omp parallel for
   for (int i = 0; i < p; i++){
     ofs[i] = 1;
     for (int j = 0; j < pow(2,d); j++){
@@ -71,6 +73,7 @@ void parallel_radix_sort(vector<long>& A, int n, int b, int p){
   for (int k = 0; k < b; k += d){
     int q = (k+d <= b) ? d : (b-k);
     //cout << "q: " << q << endl;
+    #pragma omp parallel for
     for (int i = 0; i < n; i++){
       S[i] = extract_bit_segment(A[i],k,k+q);
     }
@@ -79,9 +82,11 @@ void parallel_radix_sort(vector<long>& A, int n, int b, int p){
     par_counting_rank(S,n,q,r,p);
     //cout << "Ranks: ";
     //print_vector(r);
+    #pragma omp parallel for
     for (int i = 0; i < n; i++){
       B[r[i]-1] = A[i];
     }
+    #pragma omp parallel for
     for (int i = 0; i < n; i++){
       A[i] = B[i];
     }
