@@ -21,6 +21,7 @@ void par_simulate_priority_cw_using_radix_sort(int n,vector<Edge>&  E, vector<in
   vector<long> A(E.size());
   int k = ceil(log2(E.size()))+1;
   cout << "k: " << k << endl;
+  #pragma omp parallel for
   for (unsigned int i = 0; i < E.size(); i++){
     if (E[i].u != E[i].v){
       A[i] = ((E[i].u-1) << k) + i ;
@@ -31,6 +32,7 @@ void par_simulate_priority_cw_using_radix_sort(int n,vector<Edge>&  E, vector<in
   //print_vector(A);
   parallel_radix_sort(A,E.size(),k+ceil(log2(n)),omp_get_num_threads());
   //print_vector(A);
+  #pragma omp parallel for
   for (unsigned int i = 0; i < E.size(); i++){
     int u = (A[i] >> k);
     int j = A[i] - (u << k);
@@ -72,7 +74,7 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& E, vector<Edge>& MST){
   }
 
   vector<Edge> temp = E;
-
+  #pragma omp parallel for
   for (int i = 0; i < n; i++){
     L[i] = i;
   }
@@ -81,11 +83,12 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& E, vector<Edge>& MST){
   while (F){
     cout << "Iteration==================================== " << endl;
     stop++;
-    if (stop == 10){
+    if (stop == 100){
       exit(1);
     }
+    #pragma omp parallel for
     for (int v = 0; v < n; v++){
-      C[v] = rand(0)%2; //0 is Tails, 1 is heads
+      C[v] = rand(omp_get_thread_num())%2; //0 is Tails, 1 is heads
     }
     cout << "coin tosses" << endl;
     print_vector(C);
@@ -93,6 +96,8 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& E, vector<Edge>& MST){
     par_simulate_priority_cw_using_radix_sort(n,E,R);
     print_vector(R);
     cout << "examining edges from shortest" << endl;
+
+    //#pragma omp parallel for
     for (unsigned int i = 0; i < E.size(); i++){
       long u = E[i].u;
       long v = E[i].v;
@@ -104,6 +109,7 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& E, vector<Edge>& MST){
         MST.push_back(Edge(temp[i].v,temp[i].u,temp[i].weight));
       }
     }
+    #pragma omp parallel for
     for (unsigned int i = 0; i < E.size(); i++){
       E[i] = Edge(L[E[i].u-1]+1,L[E[i].v-1]+1,E[i].weight);
     }
@@ -114,6 +120,7 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& E, vector<Edge>& MST){
     }
 
     F = false;
+    #pragma omp parallel for
     for (unsigned int i = 0; i < E.size(); i++){
       if (E[i].u != E[i].v){
         F = true;
