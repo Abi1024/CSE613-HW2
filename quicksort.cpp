@@ -75,13 +75,13 @@ int parallel_partition(vector<float>& A, int q, int r, float x){
 }
 
 void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int thread_ID){
-  cout << "Calling parallel_randomized_quicksort on size: " << (r-q+1 )<< " thread num: " << thread_ID << endl;
+  //cout << "Calling parallel_randomized_quicksort on size: " << (r-q+1 )<< " thread num: " << thread_ID << endl;
   int n = r-q + 1;
   if (n <= m){
-    cout << "Calling insertion sort" << endl;
+    //cout << "Calling insertion sort" << endl;
     for (int i = 1; i < n; i++){
       int j = i;
-      cout << "dumped?" << endl;
+      //cout << "dumped?" << endl;
       while ((j > 0) && (A[q+j-1] > A[q+j])){
         //cout << "o";
         float temp = A[q+j-1];
@@ -100,10 +100,10 @@ void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int th
     //cout << "k: " << k << endl;
     //cout << "Array after partition:" << endl;
     //print_vector(A);
-    #pragma omp task shared(A)
+    //#pragma omp task shared(A)
     parallel_randomized_quicksort(A,k+1,r,m,omp_get_thread_num());
 
     parallel_randomized_quicksort(A,q,k-1,m,omp_get_thread_num());
-    #pragma omp taskwait
+    //#pragma omp taskwait
   }
 }

@@ -10,13 +10,15 @@ using namespace std;
 int* state;
 
 void task1B(){
-  ofstream output;
+  ofstream out;
+  out.open("task1B.csv");
   bool flag = true;
   int m = 32;
-  int n = 64;
+  int n = 128;
+  int num_runs = 3;
   while(flag){
     double total_time = 0;
-    for (int j = 0; j < 1; j++){
+    for (int j = 0; j < num_runs; j++){
       vector<float> A(n);
       for (unsigned int i = 0; i < A.size(); i++){
         A[i] = rand(0)%1000000;
@@ -33,13 +35,14 @@ void task1B(){
       //print_vector(A);
       total_time += time;
     }
-    total_time /= 1;
+    total_time /= num_runs;
     cout << "n: " << n << "\t Time(ms): " << total_time*1000 << endl;
     if (total_time > 15){
       flag = false;
     }
     n *= 2;
   }
+  out.close();
 }
 
 void test_prefix_sum(){
@@ -56,24 +59,40 @@ void test_prefix_sum(){
 }
 
 void test_parallel_randomized_quicksort(){
-  vector<float> A(32000);
+  vector<float> A(100000);
+  for (unsigned int i = 0; i < A.size(); i++){
+    A[i] = rand(0)%1000000;
+  }
+  //vector<long> A = {1,10,10,6,8,14,20,10};
+  //print_vector(A);
+  double start_time = omp_get_wtime();
+  //#pragma omp parallel
+  //{
+  //  #pragma omp single
+  //  {
+      //cout << omp_get_num_threads() << endl;
+      parallel_randomized_quicksort(A,0,A.size()-1,32,0);
+  //  }
+  //}
+  double time = omp_get_wtime() - start_time;
+  //print_vector(A);
+	std::cout << "\t Time(ms): " << time*1000 << std::endl;
+}
+
+void test_parallel_partition(){
+  vector<float> A(1000000);
   for (unsigned int i = 0; i < A.size(); i++){
     A[i] = rand(0)%100000;
   }
   //vector<long> A = {1,10,10,6,8,14,20,10};
   //print_vector(A);
+  int random_index = rand(0) % A.size();
+  float random_number = A[random_index];
   double start_time = omp_get_wtime();
-  #pragma omp parallel
-  {
-    #pragma omp single
-    {
-      //cout << omp_get_num_threads() << endl;
-      parallel_randomized_quicksort(A,0,A.size()-1,32,omp_get_thread_num());
-    }
-  }
+  parallel_partition(A,0,A.size()-1,random_number);
   double time = omp_get_wtime() - start_time;
   //print_vector(A);
-	std::cout << "\t Time(ms): " << time*1000 << std::endl;
+  std::cout << "\t Time(ms): " << time*1000 << std::endl;
 }
 
 void test_radix_sort(){
@@ -226,11 +245,10 @@ void test_mst_binary_search(){
 
 int main(){
   init_rand_state(1);
-  omp_set_num_threads(1);
-  //omp_set_dynamic(true);
-  //omp_set_num_threads(omp_get_num_procs());
-  //omp_set_nested(1);
-  //task1B();
-  test_prefix_sum();
+  //omp_set_num_threads(4);
+  omp_set_num_threads(omp_get_num_procs());
+  task1B();
+  //test_prefix_sum();
+  //test_parallel_randomized_quicksort();
   return 0;
 }
