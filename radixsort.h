@@ -14,7 +14,7 @@ void print2d_vector(vector<vector<long>>& A){
   cout << endl;
 }
 
-void par_counting_rank(const vector<long> & S, int n, int d, vector<long>& r, int p){
+void par_counting_rank(const vector<unsigned long long> & S, int n, int d, vector<unsigned int>& r, int p){
   //cout << "inside par counting rank" << endl;
   vector<vector<int>> f(pow(2,d),vector<int>(p,0));
   vector<vector<int>> r1(pow(2,d),vector<int>(p,0));
@@ -59,15 +59,15 @@ void par_counting_rank(const vector<long> & S, int n, int d, vector<long>& r, in
     }
   }
 }
-unsigned long extract_bit_segment(unsigned long A, int start, int end){
+unsigned long extract_bit_segment(unsigned long long A, int start, int end){
   return  (A << (64-end)) >> (64-end+start);
 }
 
-void parallel_radix_sort(vector<long>& A, int n, int b, int p){
+void parallel_radix_sort(vector<unsigned long long >& A, int n, int b, int p){
   //cout << "inside function radix_sort" << endl;
-  vector<long> S(n);
-  vector<long> r(n);
-  vector<long> B(n);
+  vector<unsigned long long> S(n);
+  vector<unsigned int> r(n);
+  vector<unsigned long long> B(n);
   int d = ceil(log(n/(p*log(n))));
   //cout << "d : " << d << endl;
   for (int k = 0; k < b; k += d){

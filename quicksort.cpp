@@ -5,14 +5,21 @@
 #include <omp.h>
 using namespace std;
 
-void print_vector(const vector<long>& A){
+void print_vector(const vector<int>& A){
   for (unsigned int i = 0; i < A.size(); i++){
     cout << A[i] << " ";
   }
   cout << endl;
 }
 
-void print_vector(const vector<int>& A){
+void print_vector(const vector<unsigned int>& A){
+  for (unsigned int i = 0; i < A.size(); i++){
+    cout << A[i] << " ";
+  }
+  cout << endl;
+}
+
+void print_vector(const vector<unsigned long long>& A){
   for (unsigned int i = 0; i < A.size(); i++){
     cout << A[i] << " ";
   }
@@ -66,10 +73,10 @@ int parallel_partition(vector<float>& A, int q, int r, float x){
   return k;
 }
 
-void parallel_randomized_quicksort(vector<float>& A, int q, int r, int thread_ID){
+void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int thread_ID){
   //cout << "Calling parallel_randomized_quicksort" << endl;
   int n = r-q + 1;
-  if (n <= 32){
+  if (n <= m){
     //cout << "Calling insertion sort" << endl;
     for (int i = 1; i < n; i++){
       int j = i;
@@ -91,8 +98,8 @@ void parallel_randomized_quicksort(vector<float>& A, int q, int r, int thread_ID
     //cout << "Array after partition:" << endl;
     //print_vector(A);
     #pragma omp task shared(A)
-    parallel_randomized_quicksort(A,k+1,r,omp_get_thread_num());
-    parallel_randomized_quicksort(A,q,k-1,omp_get_thread_num());
+    parallel_randomized_quicksort(A,k+1,r,m,omp_get_thread_num());
+    parallel_randomized_quicksort(A,q,k-1,m,omp_get_thread_num());
     #pragma omp taskwait
   }
 }

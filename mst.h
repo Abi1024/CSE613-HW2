@@ -18,7 +18,7 @@ class Edge{
 
 void par_simulate_priority_cw_using_radix_sort(int n,vector<Edge>&  E, vector<int>& R){
   //cout << "inside par_simulate_radix_sort" << endl;
-  vector<long> A(E.size());
+  vector<unsigned long long> A(E.size());
   int k = ceil(log2(E.size()))+1;
   //cout << "k: " << k << endl;
   #pragma omp parallel for
@@ -34,8 +34,8 @@ void par_simulate_priority_cw_using_radix_sort(int n,vector<Edge>&  E, vector<in
   //print_vector(A);
   #pragma omp parallel for
   for (unsigned int i = 0; i < E.size(); i++){
-    int u = (A[i] >> k);
-    int j = A[i] - (u << k);
+    unsigned long long u = (A[i] >> k);
+    unsigned int j = A[i] - (u << k);
     //cout << "i: " << i << " u: " << u << " j: " << j << endl;
     if ((i == 0) || (u != (A[i-1] >> k))){
       R[u] = j;
@@ -52,35 +52,45 @@ void par_simulate_priority_cw_using_binary_search(int n,vector<Edge>&  E, vector
   vector<unsigned int> hi(n);
   vector<unsigned int> md(n);
   for (int i = 0; i < n; i++){
-    l[i] = 1;
-    h[i] = E.size();
+    l[i] = 0;
+    h[i] = E.size()-1;
   }
   for (int k = 1; k < 1 + ceil(log2(E.size())); k++){
-    for (int u = 0; u < n; u++){
-      B[u] = 0;
-      lo[u] = l[u];
-      hi[u] = h[u];
-    }
+    //cout << "k: " << k << endl;
+    B = vector<unsigned int>(n,0);
+    lo = l;
+    hi = h;
+    //cout << "lo:";
+    //print_vector(lo);
+    //cout << "hi: ";
+    //print_vector(hi);
     for (unsigned int i = 0; i < E.size(); i++){
-      int u = E[i].u;
+      int u = E[i].u - 1;
       md[u] = floor((lo[u]+hi[u])/2.0);
-      if ((i >= lo[u]) && (i <= md[u])){
+      if ((i + 1 >= lo[u]) && (i + 1 <= md[u]) && (E[i].u != E[i].v)){
         B[u] = 1;
       }
     }
+    //cout << "md:";
+    //print_vector(md);
+    //cout << "B:";
+    //print_vector(B);
     for (unsigned int i = 0; i < E.size(); i++){
-      int u = E[i].u;
-      md[u] = floor((lo[u]+hi[u])/2.0);
-      if ((B[u] == 1)&&(i >= lo[u])&&(i <= md[u])){
+      int u = E[i].u - 1;
+      if ((B[u] == 1)){
         h[u] = md[u];
-      }else if ((B[u] == 0) && (i > md[u])&&(i <= hi[u])){
+      }else if ((B[u] == 0) && (i + 1 > md[u])&&(i + 1<= hi[u])){
         l[u] = md[u] + 1;
       }
     }
+    //cout << "l:";
+    //print_vector(l);
+    //cout << "h:";
+    //print_vector(h);
   }
   for (unsigned int i = 0; i < E.size(); i++){
-    int u = E[i].u;
-    if (i == l[u]){
+    int u = E[i].u - 1;
+    if (i + 1 == l[u]){
       R[u] = i;
     }
   }
@@ -88,7 +98,7 @@ void par_simulate_priority_cw_using_binary_search(int n,vector<Edge>&  E, vector
 
 void par_randomized_mst_priority_cw(int n, vector<Edge>& Edges, vector<int>& MST){
   vector<long> L(n);
-  vector<long> C(n);
+  vector<int> C(n);
   vector<int> R(n);
   cout << "inside  par_randomized_mst_priority_cw" <<  endl;
   vector<float> weights(Edges.size());
@@ -103,7 +113,7 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& Edges, vector<int>& MST
 
   print_vector(weights);
   cout << "sorting weights array " << endl;
-  parallel_randomized_quicksort(weights,0,weights.size()-1,0);
+  parallel_randomized_quicksort(weights,0,weights.size()-1,32,0);
   print_vector(weights);
 
   for (unsigned int i = 0; i < Edges.size(); i++){
