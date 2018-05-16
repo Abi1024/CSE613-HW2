@@ -100,17 +100,27 @@ void test_mst(){
   }
   /*vector<int> R(num_vertices);
   par_simulate_priority_cw_using_radix_sort(R.size(), E, R);
-  print_vector(R);*/
-  vector<Edge> MST;
+  print_vector(R);
+  */
+
+  /*
+  vector<int> MST(E.size(),0);
   par_randomized_mst_priority_cw(num_vertices,E,MST);
   cout << "printing MST" << endl;
   int cost = 0;
   for (unsigned int i = 0; i < MST.size(); i++){
-    cost += MST[i].weight;
-    cout << "i: " << i << " u: " << MST[i].u << " v " << MST[i].v << " weight: " << MST[i].weight << endl;
+    if (MST[i] == 1){
+      cost += E[i].weight;
+      cout << "i: " << i << " u: " << E[i].u << " v " << E[i].v << " weight: " << E[i].weight << endl;
+    }
+
   }
-  cost /= 2;
   cout << "cost: " << cost <<  endl;
+  */
+
+  vector<int> R(num_vertices);
+  par_simulate_priority_cw_using_binary_search(R.size(), E, R);
+  print_vector(R);
 }
 
 int main(){
