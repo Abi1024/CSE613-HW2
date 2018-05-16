@@ -76,7 +76,7 @@ void print_edges(const vector<Edge>& E){
   }
 }
 
-void test_simulate_CW_using_radix_sort(){
+void test_mst(){
   int num_vertices = 9;
   vector<Edge> E;
   E.push_back(Edge(1,2,5));
@@ -98,9 +98,11 @@ void test_simulate_CW_using_radix_sort(){
   for (unsigned int i = 0; i < size; i++){
     E.push_back(Edge(E[i].v,E[i].u,E[i].weight));
   }
-  vector<int> R(num_vertices);
+  /*vector<int> R(num_vertices);
   par_simulate_priority_cw_using_radix_sort(R.size(), E, R);
-  print_vector(R);
+  print_vector(R);*/
+  vector<Edge> MST;
+  par_randomized_mst_priority_cw(num_vertices,E,MST);
 }
 
 int main(){
@@ -108,6 +110,6 @@ int main(){
   omp_set_num_threads(4);
   //omp_set_num_threads(omp_get_num_procs());
   omp_set_nested(1);
-  test_parallel_randomized_quicksort();
+  test_mst();
   return 0;
 }
