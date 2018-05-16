@@ -46,16 +46,13 @@ void par_simulate_priority_cw_using_radix_sort(int n,vector<Edge>&  E, vector<in
 void par_simulate_priority_cw_using_binary_search(int n,vector<Edge>&  E, vector<int>& R){
   cout << "inside par_simulate_binary_search" << endl;
   vector<unsigned int> B(n);
-  vector<unsigned int> l(n);
-  vector<unsigned int> h(n);
+  vector<unsigned int> l(n,0);
+  vector<unsigned int> h(n,E.size()-1);
   vector<unsigned int> lo(n);
   vector<unsigned int> hi(n);
   vector<unsigned int> md(n);
-  for (int i = 0; i < n; i++){
-    l[i] = 0;
-    h[i] = E.size()-1;
-  }
-  for (int k = 1; k < 1 + ceil(log2(E.size())); k++){
+  int iterations = 1 + ceil(log2(E.size()));
+  for (int k = 1; k < iterations; k++){
     //cout << "k: " << k << endl;
     B = vector<unsigned int>(n,0);
     lo = l;
@@ -64,10 +61,11 @@ void par_simulate_priority_cw_using_binary_search(int n,vector<Edge>&  E, vector
     //print_vector(lo);
     //cout << "hi: ";
     //print_vector(hi);
+    #pragma omp parallel for
     for (unsigned int i = 0; i < E.size(); i++){
       int u = E[i].u - 1;
       md[u] = floor((lo[u]+hi[u])/2.0);
-      if ((i + 1 >= lo[u]) && (i + 1 <= md[u]) && (E[i].u != E[i].v)){
+      if ((i  >= lo[u]) && (i  <= md[u]) && (E[i].u != E[i].v)){
         B[u] = 1;
       }
     }
@@ -75,11 +73,12 @@ void par_simulate_priority_cw_using_binary_search(int n,vector<Edge>&  E, vector
     //print_vector(md);
     //cout << "B:";
     //print_vector(B);
+    #pragma omp parallel for
     for (unsigned int i = 0; i < E.size(); i++){
       int u = E[i].u - 1;
       if ((B[u] == 1)){
         h[u] = md[u];
-      }else if ((B[u] == 0) && (i + 1 > md[u])&&(i + 1<= hi[u])){
+      }else if ((B[u] == 0) && (i  > md[u])&&(i <= hi[u])){
         l[u] = md[u] + 1;
       }
     }
@@ -88,19 +87,20 @@ void par_simulate_priority_cw_using_binary_search(int n,vector<Edge>&  E, vector
     //cout << "h:";
     //print_vector(h);
   }
+  #pragma omp parallel for
   for (unsigned int i = 0; i < E.size(); i++){
     int u = E[i].u - 1;
-    if (i + 1 == l[u]){
+    if (i  == l[u]){
       R[u] = i;
     }
   }
 }
 
-void par_randomized_mst_priority_cw(int n, vector<Edge>& Edges, vector<int>& MST){
+void par_randomized_mst_priority_cw(int n, vector<Edge>& Edges, vector<int>& MST, bool radix_sort){
   vector<long> L(n);
   vector<int> C(n);
   vector<int> R(n);
-  cout << "inside  par_randomized_mst_priority_cw" <<  endl;
+  //cout << "inside  par_randomized_mst_priority_cw" <<  endl;
   vector<float> weights(Edges.size());
   map<float,list<vector<int>>> record;
   for (unsigned int i = 0; i < Edges.size(); i++){
@@ -111,20 +111,20 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& Edges, vector<int>& MST
     record[weights[i]].push_back({Edges[i].u,Edges[i].v});
   }
 
-  print_vector(weights);
-  cout << "sorting weights array " << endl;
+  //print_vector(weights);
+  //cout << "sorting weights array " << endl;
   parallel_randomized_quicksort(weights,0,weights.size()-1,32,0);
-  print_vector(weights);
+  //print_vector(weights);
 
   for (unsigned int i = 0; i < Edges.size(); i++){
     vector<int> temp = record[weights[i]].front();
     record[weights[i]].pop_front();
     Edges[i] = Edge(temp[0],temp[1],weights[i]);
   }
-  cout << "printing sorted edges" << endl;
+  /*cout << "printing sorted edges" << endl;
   for (unsigned int i = 0; i < Edges.size(); i++){
     cout << "i: " << i << " u: " << Edges[i].u << " v " << Edges[i].v << " weight: " << Edges[i].weight << endl;
-  }
+  }*/
 
   vector<Edge> E = Edges;
   #pragma omp parallel for
@@ -134,7 +134,7 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& Edges, vector<int>& MST
   bool F = (E.size() > 0) ? true : false;
   //int stop = 0;
   while (F){
-    cout << "Iteration==================================== " << endl;
+    //cout << "Iteration==================================== " << endl;
     /*stop++;
     if (stop == 100){
       exit(1);
@@ -143,20 +143,24 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& Edges, vector<int>& MST
     for (int v = 0; v < n; v++){
       C[v] = rand(omp_get_thread_num())%2; //0 is Tails, 1 is heads
     }
-    cout << "coin tosses" << endl;
-    print_vector(C);
-    cout << "running par_simulate"  << endl;
-    par_simulate_priority_cw_using_radix_sort(n,E,R);
-    print_vector(R);
-    cout << "examining edges from shortest" << endl;
+    //cout << "coin tosses" << endl;
+    //print_vector(C);
+    //cout << "running par_simulate"  << endl;
+    if (radix_sort){
+      par_simulate_priority_cw_using_radix_sort(n,E,R);
+    }else{
+      par_simulate_priority_cw_using_binary_search(n,E,R);
+    }
+    //print_vector(R);
+    //cout << "examining edges from shortest" << endl;
 
     #pragma omp parallel for
     for (unsigned int i = 0; i < E.size(); i++){
       long u = E[i].u;
       long v = E[i].v;
-      cout << "i: " << i << " coin toss matches: " << (((C[u-1] == 0)&&(C[v-1] == 1)) ? 1 : 0) << endl;
+      //cout << "i: " << i << " coin toss matches: " << (((C[u-1] == 0)&&(C[v-1] == 1)) ? 1 : 0) << endl;
       if ((C[u-1] == 0)&&(C[v-1] == 1)&&(R[u-1] == (int) (i))){
-        cout << "coin toss valid and index valid " << endl;
+        //cout << "coin toss valid and index valid " << endl;
         L[u-1] = v-1;
         MST[i] = 1;
       }
@@ -165,11 +169,11 @@ void par_randomized_mst_priority_cw(int n, vector<Edge>& Edges, vector<int>& MST
     for (unsigned int i = 0; i < E.size(); i++){
       E[i] = Edge(L[E[i].u-1]+1,L[E[i].v-1]+1,E[i].weight);
     }
-    cout << "updated edge list after some pruning" << endl;
-
+    //cout << "updated edge list after some pruning" << endl;
+    /*
     for (unsigned int i = 0; i < E.size(); i++){
       cout << "i: " << i << " u: " << E[i].u << " v " << E[i].v << " weight: " << E[i].weight << endl;
-    }
+    }*/
 
     F = false;
     #pragma omp parallel for
