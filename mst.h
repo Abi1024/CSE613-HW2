@@ -22,7 +22,11 @@ void par_simulate_priority_cw_using_radix_sort(int n,vector<Edge>&  E, vector<in
   int k = ceil(log2(E.size()))+1;
   cout << "k: " << k << endl;
   for (unsigned int i = 0; i < E.size(); i++){
-    A[i] = ((E[i].u-1) << k) + i ;
+    if (E[i].u != E[i].v){
+      A[i] = ((E[i].u-1) << k) + i ;
+    }else{
+      A[i] = ((E[i].u-1) << k) + E.size() ;
+    }
   }
   //print_vector(A);
   parallel_radix_sort(A,E.size(),k+ceil(log2(n)),omp_get_num_threads());
@@ -37,14 +41,13 @@ void par_simulate_priority_cw_using_radix_sort(int n,vector<Edge>&  E, vector<in
   }
 }
 
-void par_randomized_mst_priority_cw(int n, vector<Edge> E, vector<Edge> MST){
+void par_randomized_mst_priority_cw(int n, vector<Edge>& E, vector<Edge>& MST){
   vector<long> L(n);
   vector<long> C(n);
   vector<int> R(n);
   cout << "inside  par_randomized_mst_priority_cw" <<  endl;
   vector<float> weights(E.size());
   map<float,list<vector<int>>> record;
-
   for (unsigned int i = 0; i < E.size(); i++){
     weights[i] = E[i].weight;
     if ( record.find(weights[i]) == record.end() ) {
@@ -68,6 +71,8 @@ void par_randomized_mst_priority_cw(int n, vector<Edge> E, vector<Edge> MST){
     cout << "i: " << i << " u: " << E[i].u << " v " << E[i].v << " weight: " << E[i].weight << endl;
   }
 
+  vector<Edge> temp = E;
+
   for (int i = 0; i < n; i++){
     L[i] = i;
   }
@@ -76,7 +81,7 @@ void par_randomized_mst_priority_cw(int n, vector<Edge> E, vector<Edge> MST){
   while (F){
     cout << "Iteration==================================== " << endl;
     stop++;
-    if (stop == 120){
+    if (stop == 10){
       exit(1);
     }
     for (int v = 0; v < n; v++){
@@ -95,8 +100,8 @@ void par_randomized_mst_priority_cw(int n, vector<Edge> E, vector<Edge> MST){
       if ((C[u-1] == 0)&&(C[v-1] == 1)&&(R[u-1] == (int) (i))){
         cout << "coin toss valid and index valid " << endl;
         L[u-1] = v-1;
-        MST.push_back(Edge(u,v,E[i].weight));
-        MST.push_back(Edge(v,u,E[i].weight));
+        MST.push_back(Edge(temp[i].u,temp[i].v,temp[i].weight));
+        MST.push_back(Edge(temp[i].v,temp[i].u,temp[i].weight));
       }
     }
     for (unsigned int i = 0; i < E.size(); i++){

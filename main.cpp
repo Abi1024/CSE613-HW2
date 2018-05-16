@@ -103,6 +103,14 @@ void test_mst(){
   print_vector(R);*/
   vector<Edge> MST;
   par_randomized_mst_priority_cw(num_vertices,E,MST);
+  cout << "printing MST" << endl;
+  int cost = 0;
+  for (unsigned int i = 0; i < MST.size(); i++){
+    cost += MST[i].weight;
+    cout << "i: " << i << " u: " << MST[i].u << " v " << MST[i].v << " weight: " << MST[i].weight << endl;
+  }
+  cost /= 2;
+  cout << "cost: " << cost <<  endl;
 }
 
 int main(){
