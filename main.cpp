@@ -245,7 +245,8 @@ void test_mst_binary_search(){
 
 int main(){
   init_rand_state(1);
-  //omp_set_num_threads(4);
+  cout << "number of processors: " << omp_get_num_procs();
+  cout << "number of default threads: " << omp_get_num_threads();
   omp_set_num_threads(omp_get_num_procs());
   task1B();
   //test_prefix_sum();
