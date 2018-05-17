@@ -31,7 +31,7 @@
 #SBATCH -p normal          # Queue (partition) name
 #SBATCH -N 1               # Total # of nodes (must be 1 for OpenMP)
 #SBATCH -n 1               # Total # of mpi tasks (should be 1 for OpenMP)
-#SBATCH -t 01:30:00        # Run time (hh:mm:ss)
+#SBATCH -t 00:05:00       # Run time (hh:mm:ss)
 
 export OMP_NUM_THREADS=62
 
