@@ -1,8 +1,9 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include "quicksort.h"
-#include "prefix_sum.h"
 #include <omp.h>
+#include "error.h"
 using namespace std;
 float start_time;
 
@@ -34,17 +35,25 @@ void print_vector(const vector<float>& A){
   cout << endl;
 }
 
-int parallel_partition(vector<float>& A, int q, int r, float x){
-  cout << "in parallel partition" << endl;
+vector<int> parallel_partition(vector<float>& A, int q, int r, float x, bool verbose){
+  vector<int> result(2);
   int n = r - q + 1;
   if (n == 1){
-    return q;
+    result[0] = q;
+    result[1] = q;
+    cout << "MAJOR ERROR" << endl;
+    exit(1);
+    return result;
   }
-  cout << "n: " << n << endl;
+  if (verbose){
+    error[omp_get_thread_num()] << "in parallel partition, n: " << n << " q: " << q << " r: " << r << " threadID: " <<  omp_get_thread_num() << endl;
+  }
+  //
   vector<float> B = vector<float>(n);
   vector<int> lt = vector<int>(n, 0);
   vector<int> gt = vector<int>(n, 0);
-  #pragma omp parallel for
+  //printf("setup vectors, thread num: %d \n",omp_get_thread_num());
+  //#pragma omp parallel for schedule(dynamic,4096)
   for(int i = 0; i < n; i++){
     B[i] = A[q+i];
     if (B[i] < x){
@@ -53,38 +62,52 @@ int parallel_partition(vector<float>& A, int q, int r, float x){
       gt[i] = 1;
     }
   }
-  cout << "B:" << endl;
-  print_vector(B);
+  //cout << "B:" << endl;
+  //print_vector(B);
   //print_vector(lt);
   //print_vector(gt);
+  if (verbose){
+    error[omp_get_thread_num()] << "entering prefix sum, threadID: " <<  omp_get_thread_num() << endl;
+  }
   parallel_prefix_sum(lt);
   parallel_prefix_sum(gt);
-  print_vector(lt);
-  print_vector(gt);
-  int k = q + lt[n-1];
-  int l = r+1- gt[n-1];
-  cout << "k: " << k << endl;
-  cout << "l: " << l << endl;
-  A[k] = x;
-  #pragma omp parallel for
+  if (verbose){
+    error[omp_get_thread_num()] << "Done with prefix sum, threadID: " <<  omp_get_thread_num() << endl;
+  }
+  //print_vector(lt);
+  //print_vector(gt);
+  result[0] = q + lt[n-1];
+  result[1] = r+1- gt[n-1];
+  //cout << "k: " << k << endl;
+  //cout << "l: " << l << endl;
+  //A[result[0]] = x;
+  //#pragma omp parallel for schedule(dynamic,4096)
   for (int i = 0; i < n; i++){
     if (B[i] < x){
       A[q + lt[i]-1] = B[i];
     }else if (B[i] > x){
-      A[l + gt[i] - 1] = B[i];
+      A[result[1] + gt[i] - 1] = B[i];
     }else{
-      A[k + (i-lt[i]-gt[i])] = B[i];
+      A[result[0] + (i-lt[i]-gt[i])] = B[i];
     }
   }
   //print_vector(A);
-  return k;
+  if (verbose){
+      error[omp_get_thread_num()] << "Done with parallel partition, threadID: " <<  omp_get_thread_num() << endl;
+  }
+  return result;
 }
 
-void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int thread_ID){
-  cout << "Calling parallel_randomized_quicksort on size: " << (r-q+1 )<< " thread num: " << thread_ID << endl;
+void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int thread_ID, bool verbose){
   int n = r-q + 1;
+  if (verbose){
+      error[omp_get_thread_num()] << "Calling quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+  }
+  //cout << "Calling quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
   if (n <= m){
-    //cout << "Calling insertion sort" << endl;
+    if (verbose){
+      error[omp_get_thread_num()] << "calling insertion sort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+    }
     for (int i = 1; i < n; i++){
       int j = i;
       //cout << "dumped?" << endl;
@@ -97,22 +120,38 @@ void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int th
       }
     }
   }else{
+    if (verbose){
+      error[omp_get_thread_num()] << "performing the recursion on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+    }
     int random_index = rand(thread_ID) % n;
     float random_number = A[q+random_index];
+    if (verbose){
+      error[omp_get_thread_num()] << "generated random number on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+    }
     //cout << "random number: " << random_number << endl;
+    //error[0] << "random: " << random_number << endl;
     //cout << "Array before partition:" << endl;
     //print_vector(A);
-    int k = parallel_partition(A,q,r,random_number);
-    //cout << "k: " << k << endl;
+    vector<int> partition = parallel_partition(A,q,r,random_number,verbose);
     //cout << "Array after partition:" << endl;
     //print_vector(A);
+    if (verbose){
+      error[omp_get_thread_num()] << "done with parallel partition on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+    }
+    #pragma omp task default(shared)
+    parallel_randomized_quicksort(A,q,partition[0]-1,m,omp_get_thread_num(),verbose);
 
     #pragma omp task default(shared)
-    parallel_randomized_quicksort(A,q,k-1,m,omp_get_thread_num());
+    parallel_randomized_quicksort(A,partition[1],r,m,omp_get_thread_num(),verbose);
 
-    #pragma omp task default(shared)
-    parallel_randomized_quicksort(A,k+1,r,m,omp_get_thread_num());
+    if (verbose){
+      error[omp_get_thread_num()] << "waiting on quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+    }
 
     #pragma omp taskwait
+    //cout << "Ending quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+  }
+  if (verbose){
+    error[omp_get_thread_num()] << "Ending quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
   }
 }
