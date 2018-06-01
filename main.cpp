@@ -6,25 +6,26 @@
 #include "mst.h"
 #include "quicksort.h"
 #include "radixsort.h"
+#include "check_sorted.h"
 #include "error.h"
+#include <iomanip>
 using namespace std;
 int* state;
-ofstream error[25];
+ofstream error[50];
 
 
 void task1B_1(){
   ofstream out;
   out.open("task1B_1.csv");
   out << "n, Time (ms) " << endl;
-  omp_set_num_threads(10);
   bool flag = true;
   int m = 32;
   int n = 128;
-  int num_runs = 3;
+  int num_runs = 1;
   while(flag){
     double total_time = 0;
     for (int j = 0; j < num_runs; j++){
-      vector<float> A(n);
+      vector<double> A(n);
       for (unsigned int i = 0; i < A.size(); i++){
         A[i] = rand(0)%1000000;
       }
@@ -33,6 +34,7 @@ void task1B_1(){
       {
         #pragma omp single
         {
+          cout << "number of actual threads: " << omp_get_num_threads() << endl;
           parallel_randomized_quicksort(A,0,A.size()-1,m,omp_get_thread_num(),false);
         }
       }
@@ -62,7 +64,7 @@ void task1B_2(){
   while(flag){
     double total_time = 0;
     for (int j = 0; j < num_runs; j++){
-      vector<float> A(n);
+      vector<double> A(n);
       for (unsigned int i = 0; i < A.size(); i++){
         A[i] = rand(0)%1000000;
       }
@@ -100,7 +102,7 @@ void task1C_1(){
   while(flag){
     double total_time = 0;
     for (int j = 0; j < num_runs; j++){
-      vector<float> A(n);
+      vector<double> A(n);
       for (unsigned int i = 0; i < A.size(); i++){
         A[i] = rand(0)%1000000;
       }
@@ -170,6 +172,7 @@ void task1C_3(){
   out << "Number of cores, Time (ms) " << endl;
   bool flag = true;
   int m = 64;
+  //int n = 134217728;
   int n = 268435456;
   int num_cores = 1;
   int num_runs = 1;
@@ -177,9 +180,9 @@ void task1C_3(){
     double total_time = 0;
     omp_set_num_threads(num_cores);
     for (int j = 0; j < num_runs; j++){
-      vector<float> A(n);
+      vector<double> A(n);
       for (unsigned int i = 0; i < A.size(); i++){
-        A[i] = rand(0)%1000000;
+        A[i] = rand(0)%100000;
       }
       double start_time = omp_get_wtime();
       #pragma omp parallel
@@ -190,6 +193,7 @@ void task1C_3(){
         }
       }
       double time = omp_get_wtime() - start_time;
+      check_sorted(A);
       //print_vector(A);
       total_time += time;
     }
@@ -209,7 +213,8 @@ void task1C_4(){
   out.open("task1C_4.csv");
   out << "Number of cores, Time (ms) " << endl;
   bool flag = true;
-  int n = 268435456;
+  int n = 134217728;
+  //int n = 268435456;
   int num_cores = 1;
   int num_runs = 1;
   while(flag){
@@ -229,6 +234,7 @@ void task1C_4(){
         }
       }
       double time = omp_get_wtime() - start_time;
+      check_sorted(A);
       //print_vector(A);
       total_time += time;
     }
@@ -249,13 +255,12 @@ void task1D_1(){
   out << "n, Time (ms) " << endl;
   bool flag = true;
   int m = 64;
-  int n = 1024;
+  int n = 64;
   int num_runs = 1;
   while(flag){
-    omp_set_num_threads(4);
     double total_time = 0;
     for (int j = 0; j < num_runs; j++){
-      vector<float> A(n);
+      vector<double> A(n);
       for (unsigned int i = 0; i < A.size(); i++){
         A[i] = rand(0)%1000000;
       }
@@ -264,6 +269,7 @@ void task1D_1(){
       {
         #pragma omp single
         {
+          //cout << "number of actual threads: " << omp_get_num_threads() << endl;
           parallel_randomized_quicksort(A,0,A.size()-1,m,omp_get_thread_num(),false);
         }
       }
@@ -274,7 +280,7 @@ void task1D_1(){
     total_time /= num_runs;
     cout << "n: " << n << "\t Time(ms): " << total_time*1000 << endl;
     out << n << "," << total_time*1000 << endl;
-    if ((total_time > 120)){
+    if (n >= 268435456){
       flag = false;
     }
     n *= 2;
@@ -285,6 +291,7 @@ void task1D_1(){
 void task1D_2(){
   ofstream out;
   out.open("task1D_2.csv");
+  cout << "setting up output" << endl;
   out << "n, Time (ms) " << endl;
   bool flag = true;
   int n = 64;
@@ -294,13 +301,15 @@ void task1D_2(){
     for (int j = 0; j < num_runs; j++){
       vector<unsigned long long> A(n);
       for (unsigned int i = 0; i < A.size(); i++){
-        A[i] = rand(0)%100000;
+        A[i] = rand(0)%1000000;
       }
+      cout << "ITERATION" << endl;
       double start_time = omp_get_wtime();
       #pragma omp parallel
       {
         #pragma omp single
         {
+          cout << "number of actual threads: " << omp_get_num_threads() << endl;
           parallel_radix_sort(A,A.size(),64,omp_get_num_threads());
         }
       }
@@ -311,9 +320,48 @@ void task1D_2(){
     total_time /= num_runs;
     cout << "n: " << n << "\t Time(ms): " << total_time*1000 << endl;
     out << n << "," << total_time*1000 << endl;
-    n *= 2;
-    if (n > 268435456){
+    if (n >= 268435456){
       flag = false;
+    }
+    n *= 2;
+  }
+  out.close();
+}
+
+void task2B_1(){
+  ifstream in;
+  in.open("ca-AstroPh-in.txt");
+  int num_vertices;
+  in >> num_vertices;
+  int num_edges;
+  in >> num_edges;
+  vector<Edge> E(num_edges);
+  cout << "num_vertices: " << num_vertices << endl;
+  cout << "edges: " << num_edges << endl;
+  for (int i = 0; i < num_edges; i++){
+    int vertex1,vertex2;
+    double edge;
+    in >> vertex1 >> vertex2 >> edge;
+    E[i] = (Edge(vertex1,vertex2,edge));
+  }
+  in.close();
+  cout << "read the inputs" << endl;
+  vector<int> MST(E.size(),0);
+  par_randomized_mst_priority_cw(num_vertices,E,MST,true);
+  cout << "printing MST" << endl;
+  double cost = 0;
+  for (unsigned int i = 0; i < MST.size(); i++){
+    if (MST[i] == 1){
+      cost += E[i].weight;
+    }
+  }
+  ofstream out;
+  out.open("ca-AstroPh-out.txt");
+  out << setprecision(9) <<  cost << endl;
+  for (unsigned int i = 0; i < MST.size(); i++){
+    if (MST[i] == 1){
+      cost += E[i].weight;
+      out << E[i].u << " " << E[i].v << " " << setprecision(9) << E[i].weight << endl;
     }
   }
   out.close();
@@ -334,7 +382,7 @@ void test_prefix_sum(){
 }
 
 void test_parallel_randomized_quicksort(){
-  vector<float> A(1000000);
+  vector<double> A(1000000);
   for (unsigned int i = 0; i < A.size(); i++){
     A[i] = rand(0)%1000000;
   }
@@ -355,7 +403,7 @@ void test_parallel_randomized_quicksort(){
 }
 
 void test_parallel_partition(){
-  vector<float> A(100);
+  vector<double> A(100);
   for (unsigned int i = 0; i < A.size(); i++){
     //A[i] = rand(0)%20;
     /*if (rand(0)%2 == 0){
@@ -365,10 +413,10 @@ void test_parallel_partition(){
     }*/
     A[i] = rand(0)%20;
   }
-  //vector<float> A = {1,10,10,6,8,14,20,10};
+  //vector<double> A = {1,10,10,6,8,14,20,10};
   print_vector(A);
   int random_index = rand(0) % A.size();
-  float random_number = A[random_index];
+  double random_number = A[random_index];
   //int random_number = 5;
   double start_time = omp_get_wtime();
   vector<int> result = parallel_partition(A,0,A.size()-1,random_number);
@@ -437,19 +485,28 @@ void create_edges(vector<Edge>& E){
 }*/
 
 void create_edges(vector<Edge>& E){
-  E.push_back(Edge(2,3,5));
-  E.push_back(Edge(2,5,9));
-  E.push_back(Edge(2,6,1));
-  E.push_back(Edge(3,4,3));
-  E.push_back(Edge(3,5,1));
-  E.push_back(Edge(3,6,2));
-  E.push_back(Edge(4,5,14));
-  E.push_back(Edge(4,6,7));
+  E.push_back(Edge(1,2,5));
+  E.push_back(Edge(1,3,2));
+  E.push_back(Edge(2,3,2));
+  E.push_back(Edge(2,4,3));
+  E.push_back(Edge(2,5,7));
 
-  unsigned int size = E.size();
+  E.push_back(Edge(3,4,3));
+  E.push_back(Edge(3,7,9));
+  E.push_back(Edge(4,5,2));
+  E.push_back(Edge(4,7,6));
+  E.push_back(Edge(5,6,8));
+
+  E.push_back(Edge(5,7,5));
+  E.push_back(Edge(5,8,7));
+  E.push_back(Edge(6,8,3));
+  E.push_back(Edge(6,9,4));
+  E.push_back(Edge(7,8,2));
+
+  /*unsigned int size = E.size();
   for (unsigned int i = 0; i < size; i++){
     E.push_back(Edge(E[i].v,E[i].u,E[i].weight));
-  }
+  }*/
 }
 
 void test_par_simulate_priority_cw_using_radix_sort(){
@@ -531,28 +588,30 @@ int main(int argc, const char* argv[]){
   cout << "number of available cores: " << omp_get_num_procs() << endl;
   init_rand_state(1);
   //omp_set_num_threads(omp_get_num_procs());
-  omp_set_nested(1);
-  omp_set_max_active_levels(24);
-  omp_set_num_threads(4);
-  for (int i = 0; i < 25; i++){
+  omp_set_num_threads(24);
+  omp_set_nested(0);
+  omp_set_max_active_levels(4);
+  for (int i = 0; i < 50; i++){
     error[i].open("err" + to_string(i) + ".txt");
   }
   //omp_set_nested(1);
   //omp_set_max_active_levels(1);
   //cout << omp_get_max_active_levels() << endl;
   //omp_set_num_threads(omp_get_num_procs());
-  task1B_1();
+  //task1B_1();
   //task1B_2();
   //task1C_1();
   //task1C_2();
   //task1C_3();
   //task1C_4();
-  //task1D_1();
+  task1D_1();
   //task1D_2();
+  //task2B_1();
   //test_prefix_sum();
   //test_parallel_partition();
   //test_parallel_randomized_quicksort();
-  for (int i = 0; i < 25; i++){
+  //test_mst_radix();
+  for (int i = 0; i < 50; i++){
     error[i].close();
   }
   return 0;

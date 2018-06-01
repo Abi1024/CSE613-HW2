@@ -1,6 +1,0 @@
-Calling quicksort on n: 47 with threadID: 22
-calling insertion sort on n: 47 with threadID: 22
-Ending quicksort on n: 47 with threadID: 22
-Calling quicksort on n: 97 with threadID: 22
-performing the recursion on n: 97 with threadID: 22
-generated random number on n: 97 with threadID: 22

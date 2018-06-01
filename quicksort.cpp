@@ -5,7 +5,7 @@
 #include <omp.h>
 #include "error.h"
 using namespace std;
-float start_time;
+double start_time;
 
 void print_vector(const vector<int>& A){
   for (unsigned int i = 0; i < A.size(); i++){
@@ -28,14 +28,14 @@ void print_vector(const vector<unsigned long long>& A){
   cout << endl;
 }
 
-void print_vector(const vector<float>& A){
+void print_vector(const vector<double>& A){
   for (unsigned int i = 0; i < A.size(); i++){
     cout << A[i] << " ";
   }
   cout << endl;
 }
 
-vector<int> parallel_partition(vector<float>& A, int q, int r, float x, bool verbose){
+vector<int> parallel_partition(vector<double>& A, int q, int r, double x, bool verbose){
   vector<int> result(2);
   int n = r - q + 1;
   if (n == 1){
@@ -49,7 +49,7 @@ vector<int> parallel_partition(vector<float>& A, int q, int r, float x, bool ver
     error[omp_get_thread_num()] << "in parallel partition, n: " << n << " q: " << q << " r: " << r << " threadID: " <<  omp_get_thread_num() << endl;
   }
   //
-  vector<float> B = vector<float>(n);
+  vector<double> B = vector<double>(n);
   vector<int> lt = vector<int>(n, 0);
   vector<int> gt = vector<int>(n, 0);
   //printf("setup vectors, thread num: %d \n",omp_get_thread_num());
@@ -98,13 +98,13 @@ vector<int> parallel_partition(vector<float>& A, int q, int r, float x, bool ver
   return result;
 }
 
-void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int thread_ID, bool verbose){
+void parallel_randomized_quicksort(vector<double>& A, int q, int r, int m, int thread_ID, bool verbose, int depth){
   int n = r-q + 1;
   if (verbose){
       error[omp_get_thread_num()] << "Calling quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
   }
   //cout << "Calling quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
-  if (n <= m){
+  if ((depth > 5)||(n <= m)){
     if (verbose){
       error[omp_get_thread_num()] << "calling insertion sort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
     }
@@ -113,7 +113,7 @@ void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int th
       //cout << "dumped?" << endl;
       while ((j > 0) && (A[q+j-1] > A[q+j])){
         //cout << "o";
-        float temp = A[q+j-1];
+        double temp = A[q+j-1];
         A[q+j-1] = A[q+j];
         A[q+j] = temp;
         j--;
@@ -124,7 +124,7 @@ void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int th
       error[omp_get_thread_num()] << "performing the recursion on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
     }
     int random_index = rand(thread_ID) % n;
-    float random_number = A[q+random_index];
+    double random_number = A[q+random_index];
     if (verbose){
       error[omp_get_thread_num()] << "generated random number on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
     }
@@ -139,10 +139,9 @@ void parallel_randomized_quicksort(vector<float>& A, int q, int r, int m, int th
       error[omp_get_thread_num()] << "done with parallel partition on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
     }
     #pragma omp task default(shared)
-    parallel_randomized_quicksort(A,q,partition[0]-1,m,omp_get_thread_num(),verbose);
+    parallel_randomized_quicksort(A,q,partition[0]-1,m,omp_get_thread_num(),verbose, depth+1);
 
-    #pragma omp task default(shared)
-    parallel_randomized_quicksort(A,partition[1],r,m,omp_get_thread_num(),verbose);
+    parallel_randomized_quicksort(A,partition[1],r,m,omp_get_thread_num(),verbose, depth+1);
 
     if (verbose){
       error[omp_get_thread_num()] << "waiting on quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
