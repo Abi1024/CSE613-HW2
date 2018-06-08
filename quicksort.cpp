@@ -100,51 +100,60 @@ vector<int> parallel_partition(vector<double>& A, int q, int r, double x, bool v
 
 void parallel_randomized_quicksort(vector<double>& A, int q, int r, int m, int thread_ID, bool verbose, int depth){
   int n = r-q + 1;
-  if (verbose){
-      error[omp_get_thread_num()] << "Calling quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+  if (q < 0){
+    cout << "ERROR" << endl;
   }
-  //cout << "Calling quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+  if (verbose){
+      error[thread_ID] << "Calling quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+  }
+  cout << "Calling quicksort on n: " << n << " with threadID: " << thread_ID << endl;
   if ((depth > 5)||(n <= m)){
     if (verbose){
-      error[omp_get_thread_num()] << "calling insertion sort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+      error[thread_ID] << "calling insertion sort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
     }
+    cout << "Calling insertion sort on n: " << n << " with threadID: " << thread_ID << endl;
     for (int i = 1; i < n; i++){
       int j = i;
       //cout << "dumped?" << endl;
-      while ((j > 0) && (A[q+j-1] > A[q+j])){
+      while ((j > 0) && (A.at(q+j-1) > A.at(q+j))){
         //cout << "o";
-        double temp = A[q+j-1];
-        A[q+j-1] = A[q+j];
-        A[q+j] = temp;
+        double temp = A.at(q+j-1);
+        A.at(q+j-1) = A.at(q+j);
+        A.at(q+j) = temp;
         j--;
       }
     }
+    cout << "Ending insertion sort on n: " << n << " with threadID: " << thread_ID << endl;
   }else{
     if (verbose){
-      error[omp_get_thread_num()] << "performing the recursion on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+      error[thread_ID] << "performing the recursion on n: " << n << " with threadID: " <<  thread_ID << endl;
     }
     int random_index = rand(thread_ID) % n;
-    double random_number = A[q+random_index];
+    double random_number = A.at(q+random_index);
     if (verbose){
-      error[omp_get_thread_num()] << "generated random number on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+      error[thread_ID] << "generated random number on n: " << n << " with threadID: " <<  thread_ID << endl;
     }
     //cout << "random number: " << random_number << endl;
     //error[0] << "random: " << random_number << endl;
     //cout << "Array before partition:" << endl;
     //print_vector(A);
-    vector<int> partition = parallel_partition(A,q,r,random_number,verbose);
+
+    //vector<int> partition = parallel_partition(A,q,r,random_number,verbose);
+    vector<int>partition = {q+n/2,q+n/2+1};
+    cout << "Entering the recursion with n: " << n << " with threadID: " << thread_ID << endl;
     //cout << "Array after partition:" << endl;
     //print_vector(A);
     if (verbose){
-      error[omp_get_thread_num()] << "done with parallel partition on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+      error[thread_ID] << "done with parallel partition on n: " << n << " with threadID: " <<  thread_ID << endl;
     }
-    #pragma omp task default(shared)
+    #pragma omp task default(none) shared(A) firstprivate(partition,m,verbose,depth,q,r)
     parallel_randomized_quicksort(A,q,partition[0]-1,m,omp_get_thread_num(),verbose, depth+1);
 
+    #pragma omp task default(none) shared(A) firstprivate(partition,m,verbose,depth,q,r)
     parallel_randomized_quicksort(A,partition[1],r,m,omp_get_thread_num(),verbose, depth+1);
 
     if (verbose){
-      error[omp_get_thread_num()] << "waiting on quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+      error[thread_ID] << "waiting on quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
     }
 
     #pragma omp taskwait
@@ -153,4 +162,5 @@ void parallel_randomized_quicksort(vector<double>& A, int q, int r, int m, int t
   if (verbose){
     error[omp_get_thread_num()] << "Ending quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
   }
+  cout << "Exiting quicksort on n: " << n << " with threadID: " << thread_ID << endl;
 }

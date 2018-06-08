@@ -260,30 +260,37 @@ void task1D_1(){
   while(flag){
     double total_time = 0;
     for (int j = 0; j < num_runs; j++){
+      cout << "Setting up array" << endl;
       vector<double> A(n);
       for (unsigned int i = 0; i < A.size(); i++){
-        A[i] = rand(0)%1000000;
+        A[i] = rand(0)%100000;
       }
+      cout << "Done Setting up array" << endl;
       double start_time = omp_get_wtime();
+      cout << "Done collecting time" << endl;
       #pragma omp parallel
       {
         #pragma omp single
         {
-          //cout << "number of actual threads: " << omp_get_num_threads() << endl;
+          cout << "number of actual threads: " << omp_get_num_threads() << endl;
           parallel_randomized_quicksort(A,0,A.size()-1,m,omp_get_thread_num(),false);
         }
       }
       double time = omp_get_wtime() - start_time;
+      //check_sorted(A);
       //print_vector(A);
       total_time += time;
     }
     total_time /= num_runs;
     cout << "n: " << n << "\t Time(ms): " << total_time*1000 << endl;
+    cout << "WHY ISNT THIS WORKING" << endl;
     out << n << "," << total_time*1000 << endl;
+    cout << "WTF MAN" << endl;
     if (n >= 268435456){
       flag = false;
     }
     n *= 2;
+    cout << "END OF ITERATION" << endl;
   }
   out.close();
 }
