@@ -16,6 +16,8 @@ void print2d_vector(vector<vector<long>>& A){
 
 void par_counting_rank(const vector<unsigned long long> & S, int n, int d, vector<unsigned int>& r, int p){
   //cout << "inside par counting rank, n: " << n << " d: " << d << " p: " << p << endl;
+  //vector<vector<int>> f2(18000,vector<int>(1));
+  //cout << "Testing" << endl;
   vector<vector<int>> f((1 << d),vector<int>(p,0));
   vector<vector<int>> r1((1 << d),vector<int>(p,0));
   //cout << "f: " << endl;

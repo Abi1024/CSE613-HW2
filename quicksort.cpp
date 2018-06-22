@@ -104,7 +104,7 @@ void parallel_randomized_quicksort(vector<double>& A, int q, int r, int m, int t
       error[omp_get_thread_num()] << "Calling quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
   }
   //cout << "Calling quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
-  if ((depth > 5)||(n <= m)){
+  if ((depth > 7)||(n <= m)){
     if (verbose){
       error[omp_get_thread_num()] << "calling insertion sort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
     }
@@ -138,17 +138,18 @@ void parallel_randomized_quicksort(vector<double>& A, int q, int r, int m, int t
     if (verbose){
       error[omp_get_thread_num()] << "done with parallel partition on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
     }
-    #pragma omp task default(shared)
+
+    #pragma omp task shared(A)
     parallel_randomized_quicksort(A,q,partition[0]-1,m,omp_get_thread_num(),verbose, depth+1);
 
     parallel_randomized_quicksort(A,partition[1],r,m,omp_get_thread_num(),verbose, depth+1);
 
-    if (verbose){
+    /*if (verbose){
       error[omp_get_thread_num()] << "waiting on quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
-    }
+    }*/
 
     #pragma omp taskwait
-    //cout << "Ending quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;
+
   }
   if (verbose){
     error[omp_get_thread_num()] << "Ending quicksort on n: " << n << " with threadID: " <<  omp_get_thread_num() << endl;

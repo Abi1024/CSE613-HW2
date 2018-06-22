@@ -9,6 +9,7 @@
 #include "check_sorted.h"
 #include "error.h"
 #include <iomanip>
+#include <string>
 using namespace std;
 int* state;
 ofstream error[50];
@@ -64,7 +65,7 @@ void task1B_2(){
   while(flag){
     double total_time = 0;
     for (int j = 0; j < num_runs; j++){
-      vector<double> A(n);
+      std::vector<double> A(n);
       for (unsigned int i = 0; i < A.size(); i++){
         A[i] = rand(0)%1000000;
       }
@@ -328,9 +329,10 @@ void task1D_2(){
   out.close();
 }
 
-void task2B_1(){
+void task2B_1(string filename){
+  string file = filename.substr(0,filename.length()-7)+"-out.txt";
   ifstream in;
-  in.open("ca-AstroPh-in.txt");
+  in.open(filename.c_str());
   int num_vertices;
   in >> num_vertices;
   int num_edges;
@@ -345,9 +347,16 @@ void task2B_1(){
     E[i] = (Edge(vertex1,vertex2,edge));
   }
   in.close();
+  unsigned int size = E.size();
+  for (unsigned int i = 0; i < size; i++){
+    E.push_back(Edge(E[i].v,E[i].u,E[i].weight));
+  }
   cout << "read the inputs" << endl;
   vector<int> MST(E.size(),0);
+  double start_time = omp_get_wtime();
   par_randomized_mst_priority_cw(num_vertices,E,MST,true);
+  double time = omp_get_wtime() - start_time;
+  cout << "Time(ms): " << time*1000 << endl;
   cout << "printing MST" << endl;
   double cost = 0;
   for (unsigned int i = 0; i < MST.size(); i++){
@@ -356,15 +365,63 @@ void task2B_1(){
     }
   }
   ofstream out;
-  out.open("ca-AstroPh-out.txt");
-  out << setprecision(9) <<  cost << endl;
+  out.open(file.c_str());
+  out << setprecision(3) <<  fixed << cost << endl;
   for (unsigned int i = 0; i < MST.size(); i++){
     if (MST[i] == 1){
       cost += E[i].weight;
-      out << E[i].u << " " << E[i].v << " " << setprecision(9) << E[i].weight << endl;
+      out << setprecision(3) << fixed << E[i].u << " " << E[i].v << " "  << E[i].weight << endl;
     }
   }
   out.close();
+}
+
+void task2B_2(string filename){
+  string file = filename.substr(0,filename.length()-7)+"-out.txt";
+  ifstream in;
+  in.open(filename.c_str());
+  int num_vertices;
+  in >> num_vertices;
+  int num_edges;
+  in >> num_edges;
+  vector<Edge> E(num_edges);
+  cout << "num_vertices: " << num_vertices << endl;
+  cout << "edges: " << num_edges << endl;
+  for (int i = 0; i < num_edges; i++){
+    int vertex1,vertex2;
+    double edge;
+    in >> vertex1 >> vertex2 >> edge;
+    E[i] = (Edge(vertex1,vertex2,edge));
+  }
+  in.close();
+  unsigned int size = E.size();
+  for (unsigned int i = 0; i < size; i++){
+    E.push_back(Edge(E[i].v,E[i].u,E[i].weight));
+  }
+  cout << "read the inputs" << endl;
+  vector<int> MST(E.size(),0);
+  double start_time = omp_get_wtime();
+  par_randomized_mst_priority_cw(num_vertices,E,MST,false);
+  double time = omp_get_wtime() - start_time;
+  cout << "Time(ms): " << time*1000 << endl;
+  cout << "printing MST" << endl;
+  double cost = 0;
+  for (unsigned int i = 0; i < MST.size(); i++){
+    if (MST[i] == 1){
+      cost += E[i].weight;
+    }
+  }
+  ofstream out;
+  out.open(file.c_str());
+  out << setprecision(3) <<  fixed << cost << endl;
+  for (unsigned int i = 0; i < MST.size(); i++){
+    if (MST[i] == 1){
+      cost += E[i].weight;
+      out << setprecision(3) << fixed << E[i].u << " " << E[i].v << " "  << E[i].weight << endl;
+    }
+  }
+  out.close();
+  cout << "Done" << endl;
 }
 
 
@@ -382,9 +439,9 @@ void test_prefix_sum(){
 }
 
 void test_parallel_randomized_quicksort(){
-  vector<double> A(1000000);
+  vector<double> A(800000);
   for (unsigned int i = 0; i < A.size(); i++){
-    A[i] = rand(0)%1000000;
+    A[i] = rand(0)%10000;
   }
   //\\vector<long> A = {1,10,10,6,8,14,20,10};
   //print_vector(A);
@@ -394,7 +451,7 @@ void test_parallel_randomized_quicksort(){
     #pragma omp single
     {
       cout << omp_get_num_threads() << endl;
-      parallel_randomized_quicksort(A,0,A.size()-1,32,0);
+      parallel_randomized_quicksort(A,0,A.size()-1,64,0);
     }
   }
   double time = omp_get_wtime() - start_time;
@@ -503,10 +560,25 @@ void create_edges(vector<Edge>& E){
   E.push_back(Edge(6,9,4));
   E.push_back(Edge(7,8,2));
 
-  /*unsigned int size = E.size();
+  unsigned int size = E.size();
   for (unsigned int i = 0; i < size; i++){
     E.push_back(Edge(E[i].v,E[i].u,E[i].weight));
-  }*/
+  }
+}
+
+void create_edges2(vector<Edge>& E){
+  E.push_back(Edge(1,2,100));
+  E.push_back(Edge(1,3,1));
+  E.push_back(Edge(3,4,2));
+  E.push_back(Edge(3,5,3));
+  E.push_back(Edge(5,6,200));
+  E.push_back(Edge(2,4,4));
+  E.push_back(Edge(4,6,5));
+  E.push_back(Edge(1,2,100));
+  unsigned int size = E.size();
+  for (unsigned int i = 0; i < size; i++){
+    E.push_back(Edge(E[i].v,E[i].u,E[i].weight));
+  }
 }
 
 void test_par_simulate_priority_cw_using_radix_sort(){
@@ -528,9 +600,9 @@ void test_par_simulate_priority_cw_using_binary_search(){
 }
 
 void test_mst_radix(){
-  int num_vertices = 9;
+  int num_vertices = 6;
   vector<Edge> E;
-  create_edges(E);
+  create_edges2(E);
   vector<int> MST(E.size(),0);
   par_randomized_mst_priority_cw(num_vertices,E,MST,true);
   cout << "printing MST" << endl;
@@ -586,33 +658,47 @@ void test_mst_binary_search(){
 int main(int argc, const char* argv[]){
   cout << "running main" << endl;
   cout << "number of available cores: " << omp_get_num_procs() << endl;
-  init_rand_state(1);
-  //omp_set_num_threads(omp_get_num_procs());
-  omp_set_num_threads(24);
-  omp_set_nested(0);
-  omp_set_max_active_levels(4);
+  init_rand_state(24);
+  omp_set_num_threads(omp_get_num_procs());
+  //omp_set_num_threads(24);
+  omp_set_nested(1);
+  omp_set_max_active_levels(6);
   for (int i = 0; i < 50; i++){
     error[i].open("err" + to_string(i) + ".txt");
   }
-  //omp_set_nested(1);
-  //omp_set_max_active_levels(1);
-  //cout << omp_get_max_active_levels() << endl;
-  //omp_set_num_threads(omp_get_num_procs());
-  //task1B_1();
-  //task1B_2();
-  //task1C_1();
-  //task1C_2();
-  //task1C_3();
-  //task1C_4();
-  task1D_1();
-  //task1D_2();
-  //task2B_1();
+  string task = argv[1];
+  cout << task << endl;
+  if (task == "task1B_1" ){
+    task1B_1();
+  }else if (task == "task1B_2" ){
+    task1B_2();
+  }else if (task == "task1C_1" ){
+    task1C_1();
+  }else if (task == "task1C_2" ){
+    task1C_2();
+  }else if (task == "task1C_3" ){
+    task1C_3();
+  }else if (task == "task1C_4" ){
+    task1C_4();
+  }else if (task == "task1D_1" ){
+    task1D_1();
+  }else if (task == "task1D_2" ){
+    task1D_2();
+  }else if (task == "task2B_1" ){
+    string filename = argv[2];
+    task2B_1(filename);
+  }else if (task == "task2B_2" ){
+    string filename = argv[2];
+    task2B_2(filename);
+  }
   //test_prefix_sum();
-  //test_parallel_partition();
+  //test_parallel_partition();.
   //test_parallel_randomized_quicksort();
   //test_mst_radix();
+  //test_par_simulate_priority_cw_using_radix_sort();
   for (int i = 0; i < 50; i++){
     error[i].close();
   }
+  delete_state();
   return 0;
 }

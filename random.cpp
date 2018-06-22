@@ -25,3 +25,7 @@ int xorshift128(int* state, int size){
 int rand(int id){
 	return xorshift128(state+id*4,4);
 }
+
+void delete_state(){
+	delete[] state;
+}
